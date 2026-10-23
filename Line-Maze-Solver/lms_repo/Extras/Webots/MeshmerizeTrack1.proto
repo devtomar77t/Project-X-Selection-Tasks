@@ -1,0 +1,127 @@
+#VRML_SIM R2023b utf8
+template language: javascript
+# Meshmerize arena (230x230 cm, 30 mm white strips on black) built from a node/edge list.
+# edges: flat list of ints, 4 per strip -> col1 row1 col2 row2 (grid nodes, row 0 = top/north).
+# Nodes sit at  offset + pitch*index  from the top-left corner of the arena.
+# The strip at the START node is extended backwards by 80 mm so the robot starts on a line.
+PROTO MeshmerizeTrack1 [
+  field SFVec3f    translation 0 0 0
+  field SFRotation rotation    0 0 1 0
+  field SFString   name        "MeshmerizeTrack1"
+  field SFFloat    arenaSize   2.3
+  field SFFloat    pitch       0.30
+  field SFFloat    offset      0.23
+  field SFFloat    lineWidth   0.03
+  field SFInt32    startCol    6
+  field SFInt32    startRow    6
+  field SFInt32    endCol      0
+  field SFInt32    endRow      6
+  field SFFloat    endBoxSize  0.4
+  field MFInt32    edges       [
+    0 0 0 1
+    0 0 1 0
+    0 1 1 1
+    0 2 0 3
+    0 2 1 2
+    0 3 0 4
+    0 4 0 5
+    0 5 0 6
+    1 0 2 0
+    1 1 1 2
+    2 0 3 0
+    3 0 4 0
+    3 2 3 3
+    3 2 4 2
+    3 3 3 4
+    3 4 4 4
+    4 0 5 0
+    4 1 4 2
+    4 1 5 1
+    4 4 4 5
+    4 5 4 6
+    4 6 5 6
+    5 0 5 1
+    5 0 6 0
+    5 1 5 2
+    5 2 5 3
+    5 3 5 4
+    5 3 6 3
+    5 4 6 4
+    5 6 6 6
+    6 0 6 1
+    6 1 6 2
+    6 2 6 3
+    6 3 6 4
+  ]
+]
+{
+%<
+  const e = fields.edges.value;
+  const A = fields.arenaSize.value, P = fields.pitch.value;
+  const O = fields.offset.value, W = fields.lineWidth.value;
+  const nx = c => -A / 2 + O + P * c;
+  const ny = r => A / 2 - O - P * r;
+  const sc = fields.startCol.value, sr = fields.startRow.value;
+  let dc = 0, dr = 0;
+  for (let i = 0; i + 3 < e.length; i += 4) {
+    if (e[i] === sc && e[i + 1] === sr) { dc = e[i + 2] - sc; dr = e[i + 3] - sr; break; }
+    if (e[i + 2] === sc && e[i + 3] === sr) { dc = e[i] - sc; dr = e[i + 1] - sr; break; }
+  }
+>%
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    children [
+      Transform {
+        translation 0 0 -0.005
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 0.02 0.02 0.02 roughness 1 metalness 0 }
+            geometry Box { size %<= A >% %<= A >% 0.01 }
+          }
+        ]
+      }
+%< for (let i = 0; i + 3 < e.length; i += 4) {
+      const x1 = nx(e[i]), y1 = ny(e[i + 1]), x2 = nx(e[i + 2]), y2 = ny(e[i + 3]);
+>%
+      Transform {
+        translation %<= (x1 + x2) / 2 >% %<= (y1 + y2) / 2 >% 0.0005
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 1 1 1 roughness 1 metalness 0 }
+            geometry Box { size %<= Math.abs(x2 - x1) + W >% %<= Math.abs(y2 - y1) + W >% 0.001 }
+          }
+        ]
+      }
+%< } >%
+%< {
+      const sx = nx(sc), sy = ny(sr);
+      const bx = sx - dc * 0.08, by = sy + dr * 0.08;   // 80 mm stub behind START node
+>%
+      Transform {
+        translation %<= (sx + bx) / 2 >% %<= (sy + by) / 2 >% 0.0005
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 1 1 1 roughness 1 metalness 0 }
+            geometry Box { size %<= Math.abs(sx - bx) + W >% %<= Math.abs(sy - by) + W >% 0.001 }
+          }
+        ]
+      }
+%< } >%
+      Transform {
+        translation %<= nx(fields.endCol.value) >% %<= ny(fields.endRow.value) >% 0.0005
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 1 1 1 roughness 1 metalness 0 }
+            geometry Box { size %<= fields.endBoxSize.value >% %<= fields.endBoxSize.value >% 0.001 }
+          }
+        ]
+      }
+    ]
+    boundingObject Transform {
+      translation 0 0 -0.005
+      children [ Box { size %<= A >% %<= A >% 0.01 } ]
+    }
+  }
+}

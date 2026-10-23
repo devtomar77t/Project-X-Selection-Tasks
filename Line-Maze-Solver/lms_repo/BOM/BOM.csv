@@ -1,0 +1,33 @@
+#,Category,Item / exact model,Qty,Unit INR,Line INR,Price basis,Supplier,Link,Key specs & rationale
+1,Controller,"ESP32 DevKit V1, 30-pin (ESP32-WROOM-32)",1,450,450,est. (seen Rs289-559),Robu / Flyrobo,https://robu.in/?s=ESP32+DevKit+V1&post_type=product,"240 MHz dual core, 12-bit ADC, 3.3 V logic, Vin 5 V; mandated MCU"
+2,Motor driver,Toshiba TB6612FNG dual MOSFET H-bridge breakout,1,180,180,est. (seen Rs149-220),Robu,https://robu.in/?s=TB6612FNG&post_type=product,"1.2 A continuous / 3.2 A peak per ch, VM 2.5-13.5 V, VCC 2.7-5.5 V, ~0.5 ohm R_DS(on)"
+3,Motors,N20 6 V 600 RPM micro metal gear motor,2,340,680,est.,Robu,https://robu.in/?s=N20+6V+600+RPM&post_type=product,"6 V nominal (~7.3 V from 2S after 0.1 V MOSFET drop), ~150-200 mA run, ~0.9 A stall, 3 mm D-shaft"
+4,Motor mounts,Mounting bracket for N20 motors (pack of 2),1,35,35,robu page,Robu,https://robu.in/?s=N20+mounting+bracket&post_type=product,Direct M3 mount for 10x12 mm N20 gearbox
+5,Wheels,44 mm 'miniQ' rubber tyre wheel for N20,2,67,134,robu page (Rs57-67),Robu,https://robu.in/?s=miniQ+wheel+44mm+N20&post_type=product,High-grip silicone/rubber tyre on 3 mm D-shaft
+6,Caster,Metal ball caster (front support),1,60,60,est.,Robu,https://robu.in/?s=ball+caster&post_type=product,Low-friction third contact point for differential drive
+7,Battery,Orange 7.4 V 1000 mAh 40C 2S LiPo (55 g),1,750,750,est.,Robu,https://robu.in/?s=7.4V+1000mAh+2S+LiPo&post_type=product,"7.4 V nominal (8.4 V max), 40 A burst capability, 55 g lightweight pouch"
+8,Charger,iMAX B6-class balance charger (2S-6S),1,1800,1800,est.,Robu,https://robu.in/?s=imax+b6+charger&post_type=product,Cell-balanced 2S charging for LiPo safety
+9,Battery safety,LiPo low-voltage alarm / cell checker (2S-8S),1,100,100,est.,Robu,https://robu.in/?s=lipo+voltage+alarm&post_type=product,Audible alert if any cell drops below 3.3 V
+10,Battery safety,"LiPo battery strap, 30 cm",1,53,53,robu page,Robu,https://robu.in/?s=lipo+battery+strap&post_type=product,Secures 2S LiPo firmly during high-G turns
+11,5 V supply,MP1584EN mini buck converter module (set to 5.0 V),1,80,80,est.,Robu / ElectronicsComp,https://robu.in/?s=MP1584EN&post_type=product,4.5-28 V input -> regulated 5.0 V (up to 3 A) for ESP32 Vin
+12,Sensors,"TCRT5000 reflective IR sensor (bare), 5 + 2 spare",7,18,126,est.,Robu,https://robu.in/?s=TCRT5000&post_type=product,"950 nm IR emitter + phototransistor, 3-5 mm optimal sensing distance"
+13,Sensor board,Perfboard 3x7 cm + male header strip,1,60,60,est.,ElectronicsComp,https://www.electronicscomp.com/,15 mm pitch mounting for 5x TCRT5000 array
+14,Passives,"Resistor assortment (220 ohm, 10 k, etc.)",1,100,100,est.,ElectronicsComp,https://www.electronicscomp.com/,"220 ohm LED current limiters, 10 k pull-ups/pull-downs (including STBY)"
+15,Passives,Electrolytic capacitor 470 uF / 25 V,2,12,24,est.,ElectronicsComp,https://www.electronicscomp.com/,Bulk decoupling across TB6612FNG VM and GND
+16,Passives,"Ceramic capacitor 0.1 uF (104), pack of 10",1,20,20,est.,ElectronicsComp,https://www.electronicscomp.com/,3 per motor (brush noise suppression) + IC logic bypass
+17,Passives,"1N5819 Schottky diodes (reverse polarity / clamping), pack of 8",1,40,40,est.,ElectronicsComp,https://www.electronicscomp.com/,Extra inductive transient clamping & reverse protection
+18,UI,"Red 5 mm LED (END box indicator) + status LED, pack of 5",1,20,20,est.,ElectronicsComp,https://www.electronicscomp.com/,Mandatory red END-zone indicator LED per Meshmerize rules
+19,UI,"Tactile push-buttons (calibration / mode select), pack of 5",1,25,25,est.,ElectronicsComp,https://www.electronicscomp.com/,Dry-run vs. Actual-run trigger & calibration button
+20,Power,Slide / rocker power switch (single start switch),2,20,40,est.,ElectronicsComp,https://www.electronicscomp.com/,Single master power switch (+1 spare)
+21,Power,3 A blade/glass fuse + inline holder,1,40,40,est.,ElectronicsComp,https://www.electronicscomp.com/,Short-circuit protection on 2S LiPo positive rail
+22,Wiring,"Silicone wire 22 AWG red + black, 2 m each",1,120,120,est.,Robu,https://robu.in/?s=silicone+wire+22awg&post_type=product,Flexible low-resistance power wiring for VM and GND
+23,Wiring,Dupont jumper set (M-F / F-F),1,130,130,est.,Robu,https://robu.in/?s=dupont+jumper+wire&post_type=product,Signal harness for ADC sensors and TB6612FNG control pins
+24,Connectors,XT30 / XT60 pair (robot side) + JST-XH 2S balance lead,1,80,80,est.,Robu,https://robu.in/?s=XT30+connector&post_type=product,Keyed high-current battery connector
+25,Connectors,Female header strips (ESP32 & TB6612FNG sockets),1,30,30,est.,ElectronicsComp,https://www.electronicscomp.com/,Allows quick module swap on perfboard
+26,Chassis,Custom chassis: 3 mm acrylic laser-cut or PLA 3D print,1,450,450,est.,Local fab / Robu,https://robu.in/?s=acrylic+sheet+3mm&post_type=product,~110x90 mm footprint (well inside 220x220x220 mm box limit)
+27,Hardware,"M3 screws, nuts, brass standoffs kit",1,150,150,est.,Robu,https://robu.in/?s=M3+standoff+kit&post_type=product,Sets exact 3-5 mm sensor bar ground clearance
+28,Hardware,"Heat-shrink tubing, double-sided tape, cable ties",1,50,50,est.,Robu,https://robu.in/?s=heat+shrink+tube&post_type=product,Strain relief and insulation
+,,Subtotal,,,5827,,,,
+,,Shipping (2 suppliers + LiPo handling),,,250,,,,
+,,Contingency (10% of subtotal + shipping),,,608,,,,
+,,GRAND TOTAL,,,6685,,,,"Headroom under Rs 10,000 budget: Rs 3315"
