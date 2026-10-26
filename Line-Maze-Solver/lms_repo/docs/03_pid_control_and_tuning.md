@@ -1,4 +1,4 @@
-# Tasks 3 & 9 — PID Line Following and Tuning Notes
+# Tasks 3 — PID Line Following and Tuning Notes
 
 
 
@@ -63,8 +63,7 @@ We selected a **PD controller** (with filtered derivative and $K_i = 0$). Closed
 
 ### C++ Control Sketch (from `lms_core.h`)
 ```cpp
-// Task 3 - simple PD line follower (5 sensors, readings 0..1000, higher = line)
-// Arduino/ESP32: paste the two functions into your sketch.  On a PC: g++ task3_simple_pid.cpp && ./a.out
+// Task 3 - PID line follower (5 sensors, readings 0..1000, higher = line)
 #ifndef ARDUINO
 #include <cstdio>
 #define constrain(x, a, b) ((x) < (a) ? (a) : ((x) > (b) ? (b) : (x)))
@@ -88,12 +87,12 @@ void pidControl(float error, int &left, int &right) {
   integral += error;
   float correction = Kp * error + Ki * integral + Kd * (error - lastError);
   lastError = error;
-  left  = constrain(baseSpeed + (int)correction, -255, 255);   // line on the right -> left wheel faster
+  left  = constrain(baseSpeed + (int)correction, -255, 255); // line on the right -> left wheel faster
   right = constrain(baseSpeed - (int)correction, -255, 255);
 }
 
 #ifndef ARDUINO
-int main() {                                // demo with hard-coded sensor readings
+int main() {        // demo with hard-coded sensor readings
   int frames[3][5] = {{0, 0, 1000, 0, 0}, {0, 0, 200, 800, 0}, {0, 0, 0, 300, 900}};
   for (auto &f : frames) {
     int L, R; float e = getError(f); pidControl(e, L, R);
