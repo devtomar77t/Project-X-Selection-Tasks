@@ -1,8 +1,8 @@
 # Task 6 — Electronics & hardware
 
-Diagram: `docs/img/wiring_diagram.png` (power-block: `BOM/power_block_diagram.png`).    
+Diagram: `docs/img/wiring.jpg`  
 
-![wiring](img/wiring_diagram.png)
+![wiring](img/wiring.jpg)
 
 ## Supply voltages and grounding
 | Rail | Source | Feeds | Note |

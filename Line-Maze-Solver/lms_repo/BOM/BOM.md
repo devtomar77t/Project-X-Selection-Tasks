@@ -6,7 +6,7 @@
 
 > **How to Read the Prices:** The *Price basis* column states the origin of each figure: *"robu page"* indicates direct verification on Robu.in; *"est."* indicates standard Indian robotics supplier pricing (Robu.in / ElectronicsComp)
 
-![power block](power_block_diagram.png)
+Power-block: `docs/img/wiring.jpg`
 
 ---
 

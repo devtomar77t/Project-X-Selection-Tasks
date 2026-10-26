@@ -1,10 +1,6 @@
 """Task 8 worked example: left-hand rule vs DFS + path reduction vs shortest-path replay.
 Run: python3 maze_demo.py        (prints every step used in docs/08_maze_algorithms.md)
-Maze: junction graph with a loop and an END stub INSIDE the loop (see maze_example.png).
-
-Hardware Context:
-- Tasks 1-8 target the Toshiba TB6612FNG motor driver + 2S 7.4V LiPo + 6V N20 motors.
-- Task 9 uses the Appendix A hardware configuration (L298N + 3S 11.1V LiPo).
+Maze: junction graph with a loop and an END stub INSIDE the loop (see docs/img/maze_example.png).
 """
 import heapq
 from typing import Dict, List, Set, Tuple
