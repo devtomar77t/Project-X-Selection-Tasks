@@ -1,13 +1,7 @@
 # Tasks 3 & 9 — PID Line Following and Tuning Notes
 
-**Code References:** `src/lms_line_follower/lms_core.h` (hardware-independent PID & state machine) and `lms_line_follower.ino` (ESP32 firmware).  
-**Tests & Simulation:** `src/tests/test_core.cpp` (deterministic unit tests on sample sensor frames) and `sim_tune.cpp` (closed-loop step-response tuning).
 
-> **Hardware Context Split (Tasks 1–8 vs. Task 9):**
-> * **Tasks 1–8 (Competition Bot Design):** Uses the **Toshiba TB6612FNG** dual MOSFET H-bridge driver ($R_{\text{DS(on)}} \approx 0.5\,\Omega$, $V_{\text{drop}} \approx 0.1\text{–}0.5\text{ V}$) powered by a **2S LiPo (7.4 V nominal, 8.4 V max)** driving 6 V N20 motors. Signed commands in $[-255, +255]$ drive `PWMA`/`PWMB` ($0\text{–}255$) and direction pins `AIN1`/`AIN2`, `BIN1`/`BIN2` with `STBY` pulled `HIGH`.
-> * **Task 9 (Appendix A Implementation Challenge):** Strictly follows **Appendix A**, using the **L298N** dual full-bridge driver (`ENA`, `IN1`, `IN2`, `ENB`, `IN3`, `IN4`) powered by a **3S LiPo (11.1 V nominal)**.
 
----
 
 ## 1. Role of Each PID Term in Line Following
 
@@ -41,7 +35,7 @@ We selected a **PD controller** (with filtered derivative and $K_i = 0$). Closed
 ### Robustness & Hardware Scaling (TB6612FNG + 2S vs. Appendix A L298N + 3S)
 * **Speed & Noise Sweep:** Across `baseSpeed` $= 100 / 140 / 180 / 220$ PWM, overshoot stays bounded at $3\% / 10\% / 16\% / 20\%$; under severe $\pm 60$-count ADC noise, overshoot remains $10\%$.
 * **Actuator Response Advantage (Tasks 1–8):** With the **TB6612FNG + 2S LiPo (7.4 V)** and lightweight N20 motors, the mechanical time constant $\tau_m$ is small ($\le 40\text{–}60\text{ ms}$) and MOSFET switching has negligible deadband ($V_{\text{drop}} \approx 0.1\text{ V}$ running), so the derivative term acts cleanly without sluggish lag.
-* **Slow-Motor Caveat:** Doubling motor time constant ($\tau_m: 60\text{ ms} \to 120\text{ ms}$) increases overshoot to $35\%$ and settling time to $1.0\text{ s}$—heavier motors require reducing `baseSpeed` or increasing $K_d$.
+
 * **Code Flexibility:** The integral term remains implemented in `lms::Pid` with **output clamping (`iLimit = 30.0f`) and conditional anti-windup**, so a tiny $K_i$ can be enabled if hardware bench testing reveals a constant one-sided mechanical pull.
 
 ---
@@ -69,26 +63,44 @@ We selected a **PD controller** (with filtered derivative and $K_i = 0$). Closed
 
 ### C++ Control Sketch (from `lms_core.h`)
 ```cpp
-// Executed every fixed dt = 0.010 s (100 Hz) inside LineFollower::step()
-applyGains();  // Sync pid.kp, pid.ki, pid.kd with current parameters
-float v[kNumSensors];
-for (int i = 0; i < kNumSensors; i++) {
-  v[i] = cal.normalize(i, raw[i], p.lineIsHigh);  // 0..1000 (line = high)
+// Task 3 - simple PD line follower (5 sensors, readings 0..1000, higher = line)
+// Arduino/ESP32: paste the two functions into your sketch.  On a PC: g++ task3_simple_pid.cpp && ./a.out
+#ifndef ARDUINO
+#include <cstdio>
+#define constrain(x, a, b) ((x) < (a) ? (a) : ((x) > (b) ? (b) : (x)))
+#endif
+
+float Kp = 60, Ki = 0, Kd = 2;     // tuning: raise Kp until it wobbles, back off, then add Kd
+int   baseSpeed = 140;             // PWM 0..255 when driving straight
+float lastError = 0, integral = 0;
+
+// Function 1: sensor readings -> error  (-2 far left ... 0 centred ... +2 far right)
+float getError(const int s[5]) {
+  const int w[5] = {-2, -1, 0, 1, 2};
+  long num = 0, sum = 0;
+  for (int i = 0; i < 5; i++) { num += (long)w[i] * s[i]; sum += s[i]; }
+  if (sum == 0) return lastError;          // line lost: keep steering toward where it was last seen
+  return (float)num / sum;
 }
 
-Centroid c = weightedCentroid(v, p.minTotal);     // valid=false if sum(v) < 200
-if (c.valid) {
-  if (state != FOLLOW) pid.reset();               // Clear stale state after recovery
-  state   = FOLLOW;
-  lastPos_ = c.position;
-  o.error = c.position;                           // Setpoint = 0.0 (centre sensor S3)
-  float u = pid.update(o.error, dt, p.outLimit);  // Filtered D + anti-windup I, capped at +-110
-  o.left  = (int)(p.baseSpeed + u);
-  o.right = (int)(p.baseSpeed - u);
-  clampMotors(o.left, o.right, p.maxPwm);         // Preserve sign, clamp to [-255, +255]
-} else {
-  // Lost-line 4-state recovery machine: FOLLOW -> GRACE_HOLD -> RECOVER_L/R -> STOPPED
+// Function 2: error -> left/right motor speeds (call this at a fixed rate, e.g. every 10 ms)
+void pidControl(float error, int &left, int &right) {
+  integral += error;
+  float correction = Kp * error + Ki * integral + Kd * (error - lastError);
+  lastError = error;
+  left  = constrain(baseSpeed + (int)correction, -255, 255);   // line on the right -> left wheel faster
+  right = constrain(baseSpeed - (int)correction, -255, 255);
 }
+
+#ifndef ARDUINO
+int main() {                                // demo with hard-coded sensor readings
+  int frames[3][5] = {{0, 0, 1000, 0, 0}, {0, 0, 200, 800, 0}, {0, 0, 0, 300, 900}};
+  for (auto &f : frames) {
+    int L, R; float e = getError(f); pidControl(e, L, R);
+    printf("error %+.2f -> left %3d right %3d\n", e, L, R);
+  }
+}
+#endif
 ```
 
 ---
@@ -108,16 +120,8 @@ if (c.valid) {
 ### B. Lost-Line Handling (5-State Machine in `lms_core.h`)
 When all five sensors read background ($\sum v_i < 	ext{minTotal} = 200$), returning $e = 0$ would trick the controller into driving straight ahead off the track. Instead, `LineFollower::step()` transitions through:
 1. **`GRACE_HOLD` ($\le 30	ext{ ms}$):** Holds the last valid motor commands (`lastL_`, `lastR_`). Small surface bumps or tape gaps briefly lift the sensor array for 1–3 ticks ($10	ext{–}30	ext{ ms}$); riding through prevents false recovery spins.
-2. **`RECOVER_LEFT` / `RECOVER_RIGHT` ($30	ext{ ms} < t_{	ext{lost}} \le 500	ext{ ms}$):** Checks the sign of `lastPos_` (which edge sensor saw the line last) and commands an **in-place pivot** (`left = +pivotSpeed, right = -pivotSpeed` for right recovery, or `-110 / +110` for left recovery), clamped to `maxPwm`. As soon as any sensor re-acquires the line (`c.valid == true`), `pid.reset()` clears any stale derivative/integral memory and resumes `FOLLOW`.
+2. **`RECOVER_LEFT` / `RECOVER_RIGHT` ($30	ext{ ms} < t_{	ext{lost}} \le 500	ext{ ms}$):** Checks the sign of `lastPos_` (which edge sensor saw the line last) and commands an **in-place pivot** (`left = +pivotSpeed, right = -pivotSpeed` for right recovery, or `-110 / +110` for left recovery), clamped to `maxPwm`.
 3. **`STOPPED` ($t_{	ext{lost}} > 500	ext{ ms}$):** If the line is not found within $500	ext{ ms}$, both motors are forced to `0 / 0` (putting the TB6612FNG/L298N into safe stop) and the `STOPPED` state is latched until `reset()` is called. This prevents a runaway robot and protects the motor driver from continuous stall heating.
 
----
 
-## 5. Verification on Sample Sensor Inputs (`test_core.cpp`)
-Running `g++ -std=c++11 -o test_core test_core.cpp && ./test_core` validates every stage of the pipeline:
-* **Centred line (`S3 = high`):** $e = 0.0 \implies u = 0 \implies$ symmetric motor commands **`140 / 140`**.
-* **Progressive rightward drift (`S3->S4->S5`):** $e > 0 \implies$ differential commands step through **`170 / 110` $	o$ `191 / 88` $	o$ `239 / 40`** (left wheel accelerates, right wheel decelerates to steer right).
-* **Transient bump dropout ($\le 30	ext{ ms}$):** `GRACE_HOLD` preserves **`239 / 40`** without jerking.
-* **Extended line loss ($> 30	ext{ ms}$):** Transitions to `RECOVER_RIGHT` and pivots in place at **`110 / -110`**.
-* **Line re-acquisition:** Resets PID state cleanly and returns to `FOLLOW`.
-* **Permanent loss ($> 500	ext{ ms}$):** Latches `STOPPED` with **`0 / 0`** motor output. All unit test assertions pass.
+

@@ -1,6 +1,6 @@
 # Task 8 — Maze-solving algorithms
 
-Reproduce every step and figure here by running `python3 src/maze/maze_demo.py`. Diagram: `docs/img/maze_example.png`. *(Hardware context: Tasks 1–8 use the Toshiba TB6612FNG MOSFET driver, 6 V N20 motors, and a 2S 7.4 V LiPo battery; Task 9 uses Appendix A.)*
+Diagram: `docs/img/maze_example.png`.
 
 ![maze](img/maze_example.png)
 
@@ -13,7 +13,7 @@ Reproduce every step and figure here by running `python3 src/maze/maze_demo.py`.
 | **Replay route quality** | Algebraic turn reduction (`X+B+Y`) removes dead-end stubs, **but cannot remove loops** (takes a longer path) | Full graph map allows **Dijkstra / BFS** to compute the **true global shortest path** for the Actual Run |
 
 **Decision for an unknown Meshmerize maze: DFS on a junction graph.**  
-Looking at the official Meshmerize arena (Fig. 1 in `Meshmerize_PS.pdf`), the track contains multiple **closed rectangular loops**. A pure Left-Hand or Right-Hand rule can cycle forever around a loop or miss the shortest route (costing the 30-point *Shortest Path* bonus). Using **DFS with a `visited` set** guarantees reaching the $400\times 400\text{ mm}$ white `END` box during the 3-minute Dry Run, and building a junction graph lets us run **Dijkstra's algorithm** to guarantee the fastest route for the 2.5-minute Actual Run.
+A pure Left-Hand or Right-Hand rule can cycle forever around a loop or miss the shortest route if there are loops in maze. Using **DFS with a `visited` set** guarantees reaching the $400\times 400\text{ mm}$ white `END` box during the 3-minute Dry Run, and building a junction graph lets us run **Dijkstra's algorithm** to guarantee the fastest route for the 2.5-minute Actual Run.
 
 ---
 
@@ -57,7 +57,7 @@ DFS uses the same `L > S > R` preference for *unvisited* branches, but **never e
 
 ### C. Turn Reduction vs. Dijkstra Optimal Replay
 * **Algebraic Turn Reduction (`X + B + Y` angle addition: $S=0\text{°}, R=90\text{°}, B=180\text{°}, L=270\text{°}$):**
-  > *Correction to supplied README:* The resource README lists `L + B + R -> S`, which is a typo ($270\text{°} + 180\text{°} + 90\text{°} = 540\text{°} \equiv 180\text{°} = \mathbf{B}$, matching the Pololu 3pi guide). Using exact modulo-$360\text{°}$ angle addition in `maze_demo.py`:
+  
   $$\text{SS(BLR)SS(BSL)} \xrightarrow{\text{BLR} \to \text{B},\; \text{BSL} \to \text{R}} \text{SS(BSB)L} \xrightarrow{\text{SB}\text{S} \text{ or } \text{SBL} \to \text{R}} \mathbf{S R R R}$$
   *(Step-by-step: `SBL -> R` gives `SRRSSBSL`; then `SBS -> B` gives `SRRBL`; then `RBL -> B` or left-to-right `SBL -> R`, `SBS -> B`, `SBL -> R` yields **`SRRR`**).*  
   Turn reduction eliminates dead ends `H` and `E`, yielding path `S -> A -> B -> D -> N -> G` (**length 8**), **but fails to notice the shortcut `A -> C -> N` because it does not understand loop geometry!**
@@ -79,57 +79,41 @@ DFS uses the same `L > S > R` preference for *unvisited* branches, but **never e
 ## 5. Pseudocode (DFS Exploration + Dijkstra Optimal Replay)
 
 ```text
-// ========================= PHASE 1: DRY RUN (EXPLORATION) =========================
-function DRY_RUN_DFS():
-    visited = {START}
-    path_stack = [START]
-    graph = empty_weighted_graph()
-    
-    drive_from_start_to_first_junction(A)
-    current_node = A
-    visited.add(A)
-    path_stack.push(A)
+START
+  start = node at (0,0)
+  stack = [start]                      # remembers the way back
+  end_nodes = []                       # END boxes are kept here, separately
 
-    while not is_end_box_400x400(current_node):
-        exits = sense_available_branches(current_node)   // Check L, S, R via S1..S5 array
-        record_edges_in_graph(graph, current_node, exits)
-        
-        // Pick first unvisited branch using priority: Left (L) > Straight (S) > Right (R)
-        next_branch = None
-        for dir in [LEFT, STRAIGHT, RIGHT]:
-            if dir in exits and exits[dir] not in visited:
-                next_branch = exits[dir]
-                break
-                
-        if next_branch is not None:
-            execute_turn_and_follow_segment(current_node, next_branch)
-            visited.add(next_branch)
-            path_stack.push(next_branch)
-            current_node = next_branch
-        else:
-            // All branches at current_node are visited (or dead end): backtrack!
-            path_stack.pop()
-            parent_node = path_stack.top()
-            turn_toward_and_follow_segment(current_node, parent_node)
-            current_node = parent_node
+PHASE 1: EXPLORE (depth-first search)
+  repeat:
+    drive along the line to the next node (junction, corner, dead end or END box)
+    measure the distance driven and which exits exist (left / straight / right)
 
-    digitalWrite(RED_END_LED, HIGH)   // Glow Red LED at 400x400 mm END box (+5 pts)
-    save_graph_to_NVS_flash(graph)    // Persist map across power/mode switch
+    new position = old position + distance (in the current heading)
+    if a known node is near that position:  node = that node
+    else:                                   node = new node, push it on the stack
+    save the edge (previous node <-> node) with its length
 
-// ========================= PHASE 2: ACTUAL RUN (REPLAY) ===========================
-function ACTUAL_RUN_REPLAY():
-    graph = load_graph_from_NVS_flash()
-    shortest_nodes = Dijkstra_Shortest_Path(graph, START, END)
-    replay_turns   = compute_junction_turns(shortest_nodes)  // e.g., ['R', 'L', 'L']
-    
-    idx = 0
-    while true:
-        follow_line_PID(high_speed_profile)
-        if junction_detected():
-            if is_end_box_400x400():
-                stop_motors()
-                digitalWrite(RED_END_LED, HIGH)
-                break
-            execute_precomputed_turn(replay_turns[idx])
-            idx = idx + 1
+    if node is the END box:  add it to end_nodes and carry on exploring
+
+    if we reached a known node by a NEW edge (a loop):
+        U-turn and go straight back          # every edge is driven only twice
+    else if node has an unexplored exit:
+        take the first one in the order LEFT, STRAIGHT, RIGHT
+    else:                                    # dead end, or everything here is done
+        pop the node from the stack
+        if the stack is empty:  stop         # back at (0,0), whole maze mapped
+        turn toward the parent node (the new top of the stack)
+
+PHASE 2: SHORTEST PATH
+  run Dijkstra on the saved graph (edge weight = length)
+      from (0,0) to the nearest node in end_nodes
+  walk along that path and write one letter per node:  L, S or R
+      example result:  "LSRLSSRL"
+
+PHASE 3: REPLAY
+  for each letter in the string:
+      drive to the next node
+      turn as the letter says
+  at the END box: stop and switch the red LED on
 ```

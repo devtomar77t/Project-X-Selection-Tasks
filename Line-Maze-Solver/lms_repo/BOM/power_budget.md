@@ -1,6 +1,6 @@
 # Task 5 — Power Budget & Battery Selection
 
-All figures below are computed deterministically by `BOM/bom_calc.py` (re-run `python3 bom_calc.py` to update any assumption). **Hardware Configuration (Tasks 1–8):** Toshiba TB6612FNG dual MOSFET motor driver, ESP32 DevKit V1 (WROOM-32), 5× TCRT5000 IR reflectance array, MP1584EN 5.0 V buck converter, and 2× N20 6 V 600 RPM micro metal gearmotors powered by an **Orange 2S 7.4 V 1000 mAh 40C LiPo pack (55 g)**. *(Task 9 retains the Appendix A L298N + 3S configuration.)*
+**Hardware Configuration:** Toshiba TB6612FNG dual MOSFET motor driver, ESP32 DevKit V1 (WROOM-32), 5× TCRT5000 IR reflectance array, MP1584EN 5.0 V buck converter, and 2× N20 6 V 600 RPM micro metal gearmotors powered by an **Orange 2S 7.4 V 1000 mAh 40C LiPo pack (55 g)**.
 
 ---
 

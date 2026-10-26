@@ -1,11 +1,10 @@
 # Task 4 — Bill of Materials (Budget ₹10,000)
 
-**Grand Total: ₹6,685 (including ₹250 shipping and 10% contingency) → ₹3,315 budget headroom** (deliberately reserved for a spare TB6612FNG/ESP32, magnetic-encoder N20 motors for the optional closed-loop speed extension, or a backup 2S LiPo pack).
+**Grand Total: ₹6,685 (including ₹250 shipping and 10% contingency) → ₹3,315 budget headroom.**
 
-> **Hardware Architecture Note (Tasks 1–8 vs. Task 9):**  
-> Tasks 1–8 use the **Toshiba TB6612FNG** dual MOSFET motor driver paired with a **2S 7.4 V 1000 mAh 40C LiPo** and **6 V 600 RPM N20 micro metal gearmotors** (replacing the inefficient L298N and heavy 3S pack). Task 9 strictly retains the **Appendix A** hardware configuration (L298N + 3S 11.1 V LiPo).
->
-> **How to Read the Prices:** The *Price basis* column states the origin of each figure: *"robu page"* indicates direct verification on Robu.in; *"est."* indicates standard Indian robotics supplier pricing (Robu.in / ElectronicsComp) — confirm cart totals prior to ordering. The 10% contingency (₹608) plus ₹3,315 headroom easily absorb minor supplier price fluctuations.
+
+
+> **How to Read the Prices:** The *Price basis* column states the origin of each figure: *"robu page"* indicates direct verification on Robu.in; *"est."* indicates standard Indian robotics supplier pricing (Robu.in / ElectronicsComp)
 
 ![power block](power_block_diagram.png)
 
@@ -56,7 +55,7 @@
 |---|---|---|
 | **ESP32 DevKit V1 (WROOM-32)** | 240 MHz dual-core Xtensa, 12-bit SAR ADC, 3.3 V logic, Vin 5 V | Mandated platform. Easily runs our deterministic 100 Hz (10 ms) PID & maze solver loop on Core 1 while leaving Core 0 free for BLE telemetry (Task 7). |
 | **Toshiba TB6612FNG module** | Dual MOSFET H-bridge, $V_M = 2.5\text{–}13.5\text{ V}$, $V_{\text{CC}} = 2.7\text{–}5.5\text{ V}$, $1.2\text{ A}$ continuous / $3.2\text{ A}$ peak per channel, $R_{\text{DS(on)}} \approx 0.5\,\Omega$ | Drops only $\approx 0.1\text{ V}$ at running current ($0.2\text{ A}$) and $\approx 0.5\text{ V}$ at $1\text{ A}$ stall — saving $\sim 2.0\text{–}2.5\text{ V}$ wasted as heat in an L298N. Powered at $V_{\text{CC}} = 3.3\text{ V}$ so $V_{\text{IN(H)}} = 2.31\text{ V}$ matches ESP32 3.3 V GPIOs directly. |
-| **2 × N20 6 V 600 RPM motors** | All-metal brass/steel gearbox, $10\times 12\text{ mm}$ cross-section, $3\text{ mm}$ D-shaft, $\sim 0.15\text{–}0.20\text{ A}$ running, $\le 0.9\text{–}1.0\text{ A}$ stall | Receives $\approx 7.3\text{ V}$ from the 2S LiPo after the TB6612FNG's $0.1\text{ V}$ drop; software PWM capping (`baseSpeed = 140`, `maxPwm = 220–255`) delivers crisp $\sim 600\text{ RPM}$ ($\approx 1.38\text{ m/s}$ max, $\approx 0.8\text{–}1.0\text{ m/s}$ cruising) with $10\text{ g}$ mass per motor and stall safely below the driver's $1.2\text{ A}$ continuous rating. |
+| **2 × N20 6 V 600 RPM motors** | All-metal brass/steel gearbox, $10\times 12\text{ mm}$ cross-section, $3\text{ mm}$ D-shaft, $\sim 0.15\text{–}0.20\text{ A}$ running, $\le 0.9\text{–}1.0\text{ A}$ stall | Receives $\approx 7.3\text{ V}$ from the 2S LiPo after the TB6612FNG's $0.1\text{ V}$ drop; software PWM capping (`baseSpeed = 140`, `maxPwm = 220–255`) delivers crisp $\sim 600\text{ RPM}$  with $10\text{ g}$ mass per motor and stall safely below the driver's $1.2\text{ A}$ continuous rating. |
 | **44 mm wheels + N20 brackets** | Soft rubber tyre, press-fit on $3\text{ mm}$ D-shaft | High traction on smooth white vinyl strips; zero axial slip and right ground clearance for the front sensor bar. |
 | **Metal ball caster** | Omnidirectional steel ball support | Low-friction third contact point enabling zero-radius in-place pivot turns at $90^\circ$ maze junctions and dead ends. |
 | **Orange 2S 1000 mAh 40C LiPo** | $7.4\text{ V}$ nominal ($6.6\text{–}8.4\text{ V}$), $55\text{ g}$, $40\text{C} = 40\text{ A}$ burst | $7.4\text{ V}$ nominal sits squarely inside the TB6612FNG's $2.5\text{–}13.5\text{ V}$ $V_M$ window, cuts battery mass by $30\text{ g}$ vs. a 3S pack, and delivers $\sim 104\text{ min}$ runtime (nearly $20\times$ a 5.5-minute Meshmerize match). |
@@ -78,11 +77,7 @@
 | **Heat Dissipated at $1\text{ A}$ Stall (2 ch)** | **$\approx 1.0\text{ W}$** (no heatsink needed) | **$\approx 5.0\text{ W}$** (requires heavy metal heatsink) | $\approx 0.72\text{ W}$ (no heatsink needed) |
 | **Motor Supply ($V_M$) Range** | **$2.5\text{–}13.5\text{ V}$** ($15\text{ V}$ abs max) — ideal for **2S LiPo ($7.4\text{–}8.4\text{ V}$)** | Up to $46\text{ V}$ (needs $\ge 7\text{ V}$ when using onboard regulator) | $2.7\text{–}10.8\text{ V}$ (tighter ceiling on fresh 2S spikes) |
 | **Footprint & Weight** | **$20\times 20\text{ mm}$, $\approx 2.5\text{ g}$** | $43\times 43\times 27\text{ mm}$, $\approx 26\text{ g}$ ($10\times$ heavier) | $18\times 21\text{ mm}$, $\approx 2\text{ g}$ |
-| **Control Interface** | `PWMA/B` + `AIN1/2`, `BIN1/2` + `STBY` (7 pins, or 6 if `STBY` tied HIGH) | `ENA/B` + `IN1..4` (6 pins) | 4 PWM pins (`AIN1/2`, `BIN1/2`, uses 4 LEDC channels) |
 
 **Why TB6612FNG Wins:** Compared to the L298N, the TB6612FNG eliminates up to $3.2\text{ V}$ of wasted Darlington saturation drop and $4\text{ W}$ of heat during stalls, shedding $23\text{ g}$ of driver weight and $30\text{ g}$ of battery weight (moving from a 3S to a 2S LiPo). Compared to the DRV8833, the TB6612FNG provides higher voltage headroom ($15\text{ V}$ vs. $10.8\text{ V}$) against inductive kickback on a fully charged $8.4\text{ V}$ 2S LiPo and separates speed (`PWMA`/`PWMB`) from direction (`AIN1/2`, `BIN1/2`), requiring only 2 hardware PWM channels instead of 4.
 
-### B. Motors: **N20 6 V 600 RPM (Chosen)** vs. **Yellow BO/TT Plastic Gearmotor** vs. **N20 12 V 600 RPM**
-* **vs. Yellow BO / TT Plastic Gearmotor (₹60–80):** BO motors suffer from severe plastic gear backlash, bulky dimensions, $3\times$ higher mass ($\sim 30\text{ g}$ vs. $10\text{ g}$), and $15\text{–}25\%$ unit-to-unit RPM mismatch that forces the PID loop to constantly fight lateral drift.
-* **vs. N20 12 V 600 RPM:** A 12 V motor on a 2S LiPo ($7.3\text{ V}$ after the TB6612FNG) would run at only $\sim 60\%$ of rated speed ($\sim 365\text{ RPM}$), sacrificing straight-line speed on the $230\times 230\text{ cm}$ Meshmerize arena.
-* **Why N20 6 V 600 RPM Wins on 2S:** Paired with the low-drop TB6612FNG on a $7.4\text{ V}$ 2S pack, the 6 V N20 delivers high torque-to-weight ratio, minimal backlash for crisp $90^\circ$ junction turns, and a $\le 1.0\text{ A}$ stall current that stays safely inside the TB6612FNG's $1.2\text{ A}$ continuous rating.
+ 

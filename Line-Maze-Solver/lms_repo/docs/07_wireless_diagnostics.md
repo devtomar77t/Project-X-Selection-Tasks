@@ -1,6 +1,6 @@
 # Task 7 — Wireless sensor diagnostics (intermittent IR readings on a bumpy surface)
 
-*(Hardware context: Tasks 1–8 use the Toshiba TB6612FNG MOSFET motor driver, 6 V N20 motors, and a 2S 7.4 V 1000 mAh LiPo battery, giving a typical system current draw of **403 mA**; Task 9 uses the Appendix A L298N + 3S configuration.)*
+
 
 ![architecture](img/wireless_architecture.png)
 
@@ -17,7 +17,7 @@
 1. **Low data rate fits BLE perfectly:** 5 sensors × 2 bytes × 100 Hz = **1.0 kB/s** (about 1.8 kB/s with timestamps and fault flags), well inside BLE 4.2/5.0 notification throughput (~15–50 kB/s with negotiated MTU).
 2. **Power efficiency on a 2S LiPo:** Keeps the ESP32's 3.3 V LDO cool and prevents current spikes on the 5 V buck rail.
 3. **No router needed at the track:** Connects directly from the robot to any phone or laptop browser via Web Bluetooth.
-4. *Competition rule note:* Because Meshmerize rules forbid active Wi-Fi/Bluetooth during scored runs, the BLE diagnostic stack is wrapped in `#ifdef ENABLE_BLE_DIAG` so it compiles out completely for the final competition run.
+
 
 ---
 

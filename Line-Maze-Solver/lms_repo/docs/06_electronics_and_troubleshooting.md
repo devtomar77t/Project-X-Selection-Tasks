@@ -1,6 +1,6 @@
 # Task 6 — Electronics & hardware
 
-Diagram: `docs/img/wiring_diagram.png` (power-block: `BOM/power_block_diagram.png`). *(Note: Tasks 1–8 use the Toshiba TB6612FNG motor driver and a 2S 7.4 V LiPo; Task 9 uses the Appendix A L298N + 3S configuration.)*
+Diagram: `docs/img/wiring_diagram.png` (power-block: `BOM/power_block_diagram.png`).    
 
 ![wiring](img/wiring_diagram.png)
 
@@ -11,13 +11,13 @@ Diagram: `docs/img/wiring_diagram.png` (power-block: `BOM/power_block_diagram.pn
 | **5.0 V** | MP1584EN switching buck | ESP32 `Vin` (feeds onboard 3.3 V LDO) | High-efficiency (>88 %) step-down; isolates motor current transients from MCU input |
 | **3.3 V** | ESP32 on-board LDO (`3V3` pin) | TB6612FNG logic supply (`VCC`), `STBY` pull-up, 5× TCRT5000 IR array, END/status LEDs | ≈54 mA total logic/sensor draw; powering TB6612FNG `VCC` at 3.3 V sets $V_{\text{IN(H)}} = 0.7 \times 3.3\text{ V} = 2.31\text{ V}$ so 3.3 V ESP32 GPIOs are 100 % spec-compliant |
 
-**Common ground (star topology):** battery negative (`2S LiPo −`) is the single reference point. TB6612FNG `GND`, MP1584EN buck `GND`, ESP32 `GND` and the sensor bar `GND` all meet at this star point; the **high-current motor return runs straight back from the TB6612FNG `GND` to the battery** on its own thick 22 AWG silicone wire and never shares a thin signal trace or breadboard jumper with the ESP32 or IR sensor ground. Without a common ground, the 3.3 V logic signals (`PWMA/B`, `AIN1/2`, `BIN1/2`, `STBY`) have no voltage reference at the TB6612FNG inputs and motor behavior becomes erratic; with a *shared thin* ground path, motor return current ($I \times R_{\text{wire}}$) creates ground bounce that corrupts the ESP32's 12-bit ADC sensor readings.
+**Common ground (star topology):** battery negative (`2S LiPo −`) is the single reference point. TB6612FNG `GND`, MP1584EN buck `GND`, ESP32 `GND` and the sensor bar `GND` all meet at this star point; the **high-current motor return runs straight back from the TB6612FNG `GND` to the battery**. Without a common ground, the 3.3 V logic signals (`PWMA/B`, `AIN1/2`, `BIN1/2`, `STBY`) have no voltage reference at the TB6612FNG inputs and motor behavior becomes erratic; with a *shared thin* ground path, motor return current ($I \times R_{\text{wire}}$) creates ground bounce that corrupts the ESP32's 12-bit ADC sensor readings.
 
 **Role of the motor driver (TB6612FNG):** it acts as a **high-current MOSFET power amplifier and bidirectional H-bridge switch**, bridging low-power 3.3 V MCU logic and the 7.4 V motor rail. Each channel is a full MOSFET H-bridge ($R_{\text{DS(on)}} \approx 0.5\,\Omega$ total):
 * Direction pins (`AIN1`/`AIN2` for Left, `BIN1`/`BIN2` for Right) select which MOSFET pair conducts: forward (`1/0`), reverse (`0/1`), short brake (`1/1`), or coast/stop (`0/0`).
 * Speed pins (`PWMA`, `PWMB`) modulate the active MOSFETs with **hardware PWM** so average motor voltage — and wheel speed — tracks duty cycle (`0..255`).
 * The **`STBY` (Standby) pin** must be pulled `HIGH` (via `GPIO16` or a $10\text{ k}\Omega$ resistor to `3V3`) to enable the bridges; pulling `STBY` `LOW` forces all outputs into high-impedance sleep.
-* The bridge delivers up to 1.2 A continuous (3.2 A peak) per channel from the 7.4 V 2S rail — current that an ESP32 GPIO pin (≈12–40 mA max) could never source directly — while internal MOSFET body diodes and external Schottky clamping absorb inductive kickback when PWM switches off.
+* The bridge delivers up to 1.2 A continuous (3.2 A peak) per channel from the 7.4 V 2S rail — current that an ESP32 GPIO pin (≈12–40 mA max) could never source directly.
 
 **Hardware pin-mapping notes (fixing Appendix A / ESP32 hardware traps):**
 1. **`GPIO11` SPI Flash Conflict:** Appendix A maps right motor direction B (`IN4` / `BIN2`) to `GPIO11`. On the ESP32-WROOM-32, `GPIO6–GPIO11` are wired internally to the SPI flash chip; driving `GPIO11` as an output crashes the CPU with an illegal instruction / watchdog panic. Our wiring remaps `BIN2` (`IN4`) to **`GPIO4`** in Task 6 (and provides a configurable macro in Task 9).
